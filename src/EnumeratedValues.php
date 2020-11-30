@@ -2,8 +2,16 @@
 
 namespace Rudashi;
 
-abstract class EnumeratedValues 
+use Rudashi\Traits\Arrayable;
+use Rudashi\Traits\CanIterable;
+use Rudashi\Contracts\ArrayableInterface;
+use Rudashi\Contracts\EnumeratedInterface;
+
+class EnumeratedValues implements EnumeratedInterface
 {
+
+    use Arrayable,
+        CanIterable;
 
     /**
      * The items contained in the `array`.
@@ -31,7 +39,52 @@ abstract class EnumeratedValues
      */
     private function getArray($items): array
     {
-        
+        switch (true) {
+            case is_array($items):
+                return $items;
+            case $items instanceof EnumeratedInterface:
+                return $items->all();
+            case $items instanceof \Traversable:
+                return iterator_to_array($items);
+            default:
+                return $items !== null ? [$items] : [];
+        }
+    }
+
+    /**
+     * Get all of the items in the collection.
+     *
+     * @return array
+     */
+    public function all(): array
+    {
+        return $this->items;
+    }
+
+    /**
+     * Run a map over each of the items.
+     *
+     * @param callable $callback
+     * @return static
+     */
+    public function map(callable $callback)
+    {
+        $keys = array_keys($this->items );
+        $elements = array_map($callback, $this->items, $keys);
+
+        return new static(array_combine($keys, $elements) ?: []);
+    }
+
+    /**
+     * Get all of the items in the collection as a plain array.
+     *
+     * @return array
+     */
+    public function toArray(): array
+    {
+        return $this->map(function ($value) {
+            return $value instanceof ArrayableInterface ? $value->toArray() : $value;
+        })->all();
     }
 
 }

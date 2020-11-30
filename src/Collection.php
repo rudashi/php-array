@@ -2,7 +2,7 @@
 
 namespace Rudashi;
 
-class Collection 
+class Collection extends EnumeratedValues
 {
 
 }

@@ -8,7 +8,7 @@ if (!function_exists('collect')) {
      * Create a collection from the given value.
      *
      * @param  mixed  $value
-     * @return \Rudashi\Collection
+     * @return Collection
      */
     function collect($value = null): Collection
     {
@@ -21,7 +21,7 @@ if (!function_exists('map')) {
      * Create a Map from the given value.
      *
      * @param  mixed  $value
-     * @return \Rudashi\Map
+     * @return Map
      */
     function map($value = null): Map
     {
