@@ -2,6 +2,7 @@
 
 namespace Rudashi;
 
+use Traversable;
 use Rudashi\Traits\Arrayable;
 use Rudashi\Traits\CanIterable;
 use Rudashi\Contracts\ArrayableInterface;
@@ -44,7 +45,7 @@ class EnumeratedValues implements EnumeratedInterface
                 return $items;
             case $items instanceof EnumeratedInterface:
                 return $items->all();
-            case $items instanceof \Traversable:
+            case $items instanceof Traversable:
                 return iterator_to_array($items);
             default:
                 return $items !== null ? [$items] : [];
@@ -59,20 +60,6 @@ class EnumeratedValues implements EnumeratedInterface
     public function all(): array
     {
         return $this->items;
-    }
-
-    /**
-     * Run a map over each of the items.
-     *
-     * @param callable $callback
-     * @return static
-     */
-    public function map(callable $callback)
-    {
-        $keys = array_keys($this->items );
-        $elements = array_map($callback, $this->items, $keys);
-
-        return new static(array_combine($keys, $elements) ?: []);
     }
 
     /**
