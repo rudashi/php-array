@@ -91,24 +91,78 @@ class Map extends EnumeratedValues implements JavaScriptArrayInterface
         return $result;
     }
 
-    public function entries()
+    /**
+     * Returns a new array that contains the key/value pairs of map
+     * @link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/entries
+     *
+     * @return array
+     */
+    public function entries(): array
     {
-
+        return $this->toArray();
     }
 
-    public function every()
+    /**
+     * Determine if all items pass the test implemented by callback test.
+     *
+     * @link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/every
+     * @param  callable  $callback
+     * @return bool
+     */
+    public function every(callable $callback): bool
     {
+        foreach ($this->items as $key => $item) {
+            if ($callback($item, $key) === false) {
+                return false;
+            }
+        }
 
+        return true;
     }
 
-    public function fill()
+    /**
+     * Returns a new map with changes all items, from a start index to an end index.
+     * @link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/fill
+     *
+     * @param mixed $value
+     * @param int|null $start
+     * @param int|null $end
+     * @return static
+     */
+    public function fill($value, int $start = null, int $end = null): self
     {
+        $result = new static($this);
+        $count = $result->count();
 
+        $start >>= 0;
+        $end = (is_int($end) === false) ? $count : $end >> 0;
+
+        $relStart = $start < 0 ? max($count + $start, 0) : min($start, $count);
+        $relEnd =  $end < 0 ? max($count + $end, 0) : min($end, $count);
+
+        for ($i = $relStart; $i < $relEnd; $i++) {
+            $result->set($i, $value);
+        }
+        return $result;
     }
 
-    public function filter()
+    /**
+     * Returns a new map with all items that pass the test implemented by callback.
+     * If no callback is passed, all values which are empty, null or false will be removed.
+     * @link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter
+     *
+     * @param callable|null $callback
+     * @param bool $reset_keys
+     * @return static
+     */
+    public function filter(callable $callback = null, bool $reset_keys = false): self
     {
-
+        if ($callback) {
+            $items = (array_filter($this->items, $callback, ARRAY_FILTER_USE_BOTH));
+        } else {
+            $items = array_filter($this->items);
+        }
+        return new static($reset_keys ? array_values($items) : $items);
     }
 
     public function find()
@@ -256,6 +310,35 @@ class Map extends EnumeratedValues implements JavaScriptArrayInterface
     public function values(): self
     {
         return new static(array_values($this->items));
+    }
+
+    /**
+     * Get an item from the collection by key.
+     *
+     * @param  mixed  $key
+     * @param  mixed  $default
+     * @return mixed
+     */
+    public function get($key, $default = null)
+    {
+        if (array_key_exists($key, $this->items)) {
+            return $this->items[$key];
+        }
+
+        return $default instanceof \Closure ? $default() : $default;
+    }
+
+    /**
+     * Set the item at given key / index
+     * @param mixed $key
+     * @param mixed $value
+     * @return self
+     */
+    public function set($key, $value): self
+    {
+        $this->items[$key] = $value;
+
+        return $this;
     }
 
     public function __get($name)

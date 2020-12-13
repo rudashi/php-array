@@ -135,6 +135,174 @@ class MapTest extends TestCase
         self::assertEquals([1, 2, 'a', 'b', 'foo', 'bar'], $results->toArray());
     }
 
+    public function testEntries(): void
+    {
+        $map = new Map(['a', 'b', 'c']);
+
+        self::assertEquals([0 => 'a', 1 => 'b', 2 => 'c'], $map->entries());
+    }
+
+    public function testEvery(): void
+    {
+        $isBigEnough = function($value) {
+            return $value >= 10;
+        };
+
+        self::assertFalse((new Map([12, 5, 8, 130, 44]))->every($isBigEnough));
+        self::assertTrue((new Map([12, 54, 18, 130, 44]))->every($isBigEnough));
+
+        self::assertTrue((new Map([1, 30, 39, 29, 10, 13]))->every(function($value) {
+            return $value < 40;
+        }));
+    }
+
+    public function testEveryWhenModified(): void
+    {
+        $map = new Map([1, 2, 3, 4]);
+
+        $result = $map->every(function($value, $index) use ($map) {
+            $map->set($index + 1, $map->get($index + 1) - 1);
+
+            if ($index === 0) {
+                self::assertEquals([1, 1, 3, 4], $map->toArray());
+                self::assertEquals(0, $index);
+                self::assertEquals(1, $value);
+            }
+            if ($index === 1) {
+                self::assertEquals([1, 1, 2, 4], $map->toArray());
+                self::assertEquals(1, $index);
+                self::assertEquals(2, $value);
+            }
+
+            return $value < 2;
+        });
+        self::assertFalse($result);
+        self::assertEquals([1, 1, 2, 4], $map->toArray());
+    }
+
+    public function testGet(): void
+    {
+        $map = new Map(['test', 3=> 'value', null => 'key']);
+
+        self::assertEquals('test', $map->get(0));
+        self::assertEquals('value', $map->get(3));
+        self::assertEquals('key', $map->get(null));
+        self::assertEquals('default', $map->get(1, 'default'));
+        self::assertEquals(null, $map->get(1));
+    }
+
+    public function testGetWithCallback(): void
+    {
+        $map = new Map();
+        $result = $map->get(1, static function() {
+            return 'email@email.pl';
+        });
+        self::assertEquals('email@email.pl', $result);
+    }
+
+    public function testSet(): void
+    {
+        $map = new Map(['id' => 1, 'name' => 'foo']);
+        $map->set('title', 'bar');
+
+        self::assertEquals('bar', $map->get('title'));
+        self::assertEquals(['id' => 1, 'name' => 'foo', 'title' => 'bar'], $map->toArray());
+    }
+
+    public function testSetNested(): void
+    {
+        $map = new Map(['id' => 1]);
+        $map->set('title', ['name' => 'foo', 'bar']);
+
+        self::assertEquals(['name' => 'foo', 'bar'], $map->get('title'));
+        self::assertEquals(['id' => 1, 'title' => ['name' => 'foo', 'bar']], $map->toArray());
+    }
+
+    public function testSetOverwrite(): void
+    {
+        $map = new Map(['id' => 1, 'name' => 'foo']);
+        $map->set('name', 'bar');
+
+        self::assertEquals('bar', $map->get('name'));
+    }
+
+    public function testFill(): void
+    {
+        $map = new Map([1, 2, 3]);
+
+        self::assertEquals([4, 4, 4], $map->fill(4)->toArray());
+        self::assertEquals([1, 4, 4], $map->fill(4, 1)->toArray());
+        self::assertEquals([1, 4, 3], $map->fill(4, 1, 2)->toArray());
+        self::assertEquals([1, 2, 3], $map->fill(4, 1, 1)->toArray());
+        self::assertEquals([1, 2, 3], $map->fill(4, 3, 3)->toArray());
+        self::assertEquals([4, 2, 3], $map->fill(4, -3, -2)->toArray());
+        self::assertEquals([1, 2, 3], $map->fill(4, 3, 5)->toArray());
+        self::assertEquals([(object) ['foo' => 'bar'], (object) ['foo' => 'bar'], (object) ['foo' => 'bar']], $map->fill((object) ['foo' => 'bar'])->toArray());
+    }
+
+    public function testFilter(): void
+    {
+        $map = new Map([12, 5, 8, 130, 44]);
+
+        self::assertEquals([0 => 12, 3 => 130, 4 => 44], $map->filter(function($value) {
+            return $value >= 10;
+        })->toArray());
+    }
+
+    public function testFilterWithResetKeys(): void
+    {
+        $map = new Map([12, 5, 8, 130, 44]);
+
+        self::assertEquals([12, 130, 44], $map->filter(function($value) {
+            return $value >= 10;
+        }, true)->toArray());
+    }
+
+    public function testFilterSearching(): void
+    {
+        $map = new Map(['apple', 'banana', 'grapes', 'mango', 'orange']);
+
+        self::assertEquals(['apple', 'grapes'], $map->filter(function($value) {
+            return stripos($value, 'ap') !== false;
+        }, true)->toArray());
+    }
+
+    public function testFilterNested(): void
+    {
+        $map = new Map([['id' => 1, 'name' => 'foo'], ['id' => 2, 'name' => 'bar']]);
+
+        self::assertEquals([['id' => 2, 'name' => 'bar']], $map->filter(function($item) {
+            return $item['id'] === 2;
+        }, true)->toArray());
+    }
+
+    public function testFilterWithKey(): void
+    {
+        $map = new Map(['id' => 1, 'name' => 'foo', 'title' => 'bar']);
+
+        self::assertEquals(['name' => 'foo', 'title' => 'bar'], $map->filter(function($item, $key) {
+            return $key !== 'id';
+        })->toArray());
+    }
+
+    public function testFilterNoCallback(): void
+    {
+        $map = new Map([1, '', 'foo', null, 'bar', false, [], 0]);
+        $result = $map->filter(null, true);
+
+        self::assertEquals([1, 'foo', 'bar'], $result->toArray());
+    }
+
+//    public function testPad()
+//    {
+//        $this->assertEquals( [1, 2, 3, null, null], Map::from( [1, 2, 3] )->pad( 5 )->toArray() );
+//        $this->assertEquals( [null, null, 1, 2, 3], Map::from( [1, 2, 3] )->pad( -5 )->toArray() );
+//
+//        $this->assertEquals( [1, 2, 3, '0', '0'], Map::from( [1, 2, 3] )->pad( 5, '0' )->toArray() );
+//        $this->assertEquals( [1, 2, 3], Map::from( [1, 2, 3] )->pad( 2 )->toArray() );
+//    }
+//
+
 //    public function testMagicCall()
 //    {
 //        $m = new Map( ['a' => new TestMapObject(), 'b' => new TestMapObject()] );
@@ -621,18 +789,7 @@ class MapTest extends TestCase
 //        $map = new Map( ['foo' => 'one', 'bar' => 'two'] );
 //        $this->assertFalse( $map->equals( ['foo' => 'one', 'bar' => 'two', 'baz' => 'three'], true ) );
 //    }
-//
-//
-//    public function testEvery()
-//    {
-//        $this->assertTrue( Map::from( [0 => 'a', 1 => 'b'] )->every( function( $value, $key ) {
-//            return is_string( $value );
-//        } ) );
-//
-//        $this->assertFalse( Map::from( [0 => 'a', 1 => 100] )->every( function( $value, $key ) {
-//            return is_string( $value );
-//        } ) );
-//    }
+
 //
 //
 //    public function testExcept()
@@ -642,35 +799,7 @@ class MapTest extends TestCase
 //    }
 //
 //
-//    public function testFilter()
-//    {
-//        $m = new Map( [['id' => 1, 'name' => 'Hello'], ['id' => 2, 'name' => 'World']] );
-//
-//        $this->assertEquals( [1 => ['id' => 2, 'name' => 'World']], $m->filter( function( $item ) {
-//            return $item['id'] == 2;
-//        } )->toArray() );
-//    }
-//
-//
-//    public function testFilterNoCallback()
-//    {
-//        $m = new Map( ['', 'Hello', '', 'World'] );
-//        $r = $m->filter();
-//
-//        $this->assertInstanceOf( Map::class, $r );
-//        $this->assertEquals( ['Hello', 'World'], $r->values()->toArray() );
-//    }
-//
-//
-//    public function testFilterRemove()
-//    {
-//        $m = new Map( ['id' => 1, 'first' => 'Hello', 'second' => 'World'] );
-//
-//        $this->assertEquals( ['first' => 'Hello', 'second' => 'World'], $m->filter( function( $item, $key ) {
-//            return $key != 'id';
-//        } )->toArray() );
-//    }
-//
+
 //
 //    public function testFind()
 //    {
@@ -844,13 +973,7 @@ class MapTest extends TestCase
 //    }
 //
 //
-//    public function testGetWithClosure()
-//    {
-//        $m = new Map;
-//        $result = $m->get( 1, function() { return rand( 10, 11 ); } );
-//
-//        $this->assertGreaterThanOrEqual( 10, $result );
-//    }
+
 //
 //
 //    public function testGroupBy()
@@ -1324,15 +1447,6 @@ class MapTest extends TestCase
 //    }
 //
 //
-//    public function testPad()
-//    {
-//        $this->assertEquals( [1, 2, 3, null, null], Map::from( [1, 2, 3] )->pad( 5 )->toArray() );
-//        $this->assertEquals( [null, null, 1, 2, 3], Map::from( [1, 2, 3] )->pad( -5 )->toArray() );
-//
-//        $this->assertEquals( [1, 2, 3, '0', '0'], Map::from( [1, 2, 3] )->pad( 5, '0' )->toArray() );
-//        $this->assertEquals( [1, 2, 3], Map::from( [1, 2, 3] )->pad( 2 )->toArray() );
-//    }
-//
 //
 //    public function testPartition()
 //    {
@@ -1652,35 +1766,10 @@ class MapTest extends TestCase
 //    }
 //
 //
-//    public function testSet()
-//    {
-//        $map = Map::from( [] );
-//        $r = $map->set( 'foo', 1 );
-//
-//        $this->assertInstanceOf( Map::class, $map );
-//        $this->assertSame( ['foo' => 1], $map->toArray() );
-//    }
+
 //
 //
-//    public function testSetNested()
-//    {
-//        $map = Map::from( ['foo' => 1] );
-//        $r = $map->set( 'bar', ['nested' => 'two'] );
-//
-//        $this->assertInstanceOf( Map::class, $map );
-//        $this->assertSame( ['foo' => 1, 'bar' => ['nested' => 'two']], $map->toArray() );
-//    }
-//
-//
-//    public function testSetOverwrite()
-//    {
-//        $map = Map::from( ['foo' => 3] );
-//        $r = $map->set( 'foo', 3 );
-//
-//        $this->assertInstanceOf( Map::class, $map );
-//        $this->assertSame( ['foo' => 3], $map->toArray() );
-//    }
-//
+
 //
 //    public function testShift()
 //    {

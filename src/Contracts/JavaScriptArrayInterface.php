@@ -45,10 +45,45 @@ interface JavaScriptArrayInterface
      */
     public function concat(...$elements);
 
-    public function entries();
-    public function every();
-    public function fill();
-    public function filter();
+    /**
+     * Returns a new array that contains the key/value pairs of map
+     * @link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/entries
+     *
+     * @return array
+     */
+    public function entries(): array;
+
+    /**
+     * Determine if all items pass the test implemented by callback test.
+     *
+     * @link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/every
+     * @param  callable  $callback
+     * @return bool
+     */
+    public function every(callable $callback): bool;
+
+    /**
+     * Returns a new map with changes all items, from a start index to an end index.
+     * @link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/fill
+     *
+     * @param mixed $value
+     * @param int|null $start
+     * @param int|null $end
+     * @return static
+     */
+    public function fill($value, int $start = null, int $end = null);
+
+    /**
+     * Returns a new map with all items that pass the test implemented by callback.
+     * If no callback is passed, all values which are empty, null or false will be removed.
+     * @link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter
+     *
+     * @param callable|null $callback
+     * @param bool $reset_keys
+     * @return static
+     */
+    public function filter(callable $callback = null, bool $reset_keys = false);
+
     public function find();
     public function findIndex();
     public function flat();
