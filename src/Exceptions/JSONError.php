@@ -4,7 +4,7 @@ namespace Rudashi\Exceptions;
 
 use RuntimeException;
 
-class TypeError extends RuntimeException
+class JSONError extends RuntimeException
 {
 
 }
