@@ -5,7 +5,7 @@ use Rudashi\Collection;
 
 if (!function_exists('collect')) {
     /**
-     * Create a collection from the given value.
+     * Create a Collection from the given value.
      *
      * @param  mixed  $value
      * @return Collection

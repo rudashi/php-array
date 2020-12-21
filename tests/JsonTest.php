@@ -2,6 +2,7 @@
 
 namespace Tests;
 
+use DateTime;
 use Rudashi\Exceptions\JSONError;
 use Rudashi\Map;
 use Rudashi\Json;
@@ -35,7 +36,7 @@ class JsonTest extends TestCase
 
     public function testStringifyDate(): void
     {
-        $results = new \DateTime('2006-01-02 04:05');
+        $results = new DateTime('2006-01-02 04:05');
         self::assertJsonStringEqualsJsonString('{"date":"2006-01-02 04:05:00.000000","timezone_type":3,"timezone":"UTC"}', Json::stringify($results));
     }
 

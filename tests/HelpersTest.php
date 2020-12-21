@@ -2,9 +2,9 @@
 
 namespace Tests;
 
-use PHPUnit\Framework\TestCase;
 use Rudashi\Collection;
 use Rudashi\Map;
+use PHPUnit\Framework\TestCase;
 
 class HelpersTest extends TestCase
 {
